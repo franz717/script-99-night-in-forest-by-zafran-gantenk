@@ -3,7 +3,7 @@ local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/jen
 
 -- Buat Window
 local Window = OrionLib:MakeWindow({
-    Name = "99 Night in the Forest - Cheat Menu",
+    Name = "99 Night in the Forest - By Japran Handsome",
     HidePremium = false,
     SaveConfig = true,
     ConfigFolder = "NightForestConfig"
@@ -236,3 +236,4 @@ TeleportTab:AddButton({
 
 -- Selesai
 OrionLib:Init()
+
