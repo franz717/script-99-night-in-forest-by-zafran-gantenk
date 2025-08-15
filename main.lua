@@ -1,66 +1,41 @@
--- Load Orion Library
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/jensonhirst/Orion/main/source')))()
+-- Orion Library Loader
+local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/GRPGaming/Key-System/refs/heads/Xycer-Hub-Script/ZusumeLib(Slider)"))()
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local Workspace = game:GetService("Workspace")
 
--- Buat Window
+-- Main Window
 local Window = OrionLib:MakeWindow({
-    Name = "99 Night in the Forest - By Japran Handsome",
+    Name = "99 night in forest by frvnz",
     HidePremium = false,
     SaveConfig = true,
-    ConfigFolder = "NightForestConfig"
+    ConfigFolder = "99Night"
 })
 
--- Tabs
+----------------------------------------------------------------------
+-- TAB: MAIN
+----------------------------------------------------------------------
 local MainTab = Window:MakeTab({
-    Name = "Main Features",
+    Name = "Main",
     Icon = "rbxassetid://4483345998",
     PremiumOnly = false
 })
 
-local TeleportTab = Window:MakeTab({
-    Name = "Teleport",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
--- Variabel
-local noclipEnabled = false
-local flyEnabled = false
-local flySpeed = 5
-local autoGunEnabled = false
-local selectedPlayer = nil
-
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local RunService = game:GetService("RunService")
-local UIS = game:GetService("UserInputService")
-
-------------------------------------------------
 -- NoClip
-------------------------------------------------
+local noclip = false
 MainTab:AddToggle({
-    Name = "NoClip (tembus tembok)",
+    Name = "NoClip",
     Default = false,
     Callback = function(state)
-        noclipEnabled = state
+        noclip = state
     end
 })
-
-MainTab:AddButton({
-    Name = "Aktifkan Noclip Sekali",
-    Callback = function()
-        if player.Character then
-            for _, part in pairs(player.Character:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.CanCollide = false
-                end
-            end
-        end
-    end
-})
-
 RunService.Stepped:Connect(function()
-    if noclipEnabled and player.Character then
-        for _, part in pairs(player.Character:GetDescendants()) do
+    if noclip and LocalPlayer.Character then
+        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
             if part:IsA("BasePart") then
                 part.CanCollide = false
             end
@@ -68,172 +43,224 @@ RunService.Stepped:Connect(function()
     end
 end)
 
-------------------------------------------------
--- Fly
-------------------------------------------------
-local flyVelocity
+-- Fly (Infinite Yield style)
+local flying = false
+local flyspeed = 50
+local BV, BG
+
+local function startFly()
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    BV = Instance.new("BodyVelocity")
+    BV.Velocity = Vector3.zero
+    BV.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+    BV.Parent = hrp
+
+    BG = Instance.new("BodyGyro")
+    BG.CFrame = hrp.CFrame
+    BG.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+    BG.Parent = hrp
+
+    flying = true
+end
+
+local function stopFly()
+    flying = false
+    if BV then BV:Destroy() BV = nil end
+    if BG then BG:Destroy() BG = nil end
+end
+
 MainTab:AddToggle({
-    Name = "Fly Mode",
+    Name = "Fly",
     Default = false,
     Callback = function(state)
-        flyEnabled = state
-        if flyEnabled then
-            local hrp = player.Character:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                flyVelocity = Instance.new("BodyVelocity")
-                flyVelocity.Velocity = Vector3.new(0,0,0)
-                flyVelocity.MaxForce = Vector3.new(1e5,1e5,1e5)
-                flyVelocity.Parent = hrp
-            end
-        else
-            if flyVelocity then
-                flyVelocity:Destroy()
-                flyVelocity = nil
-            end
-        end
+        if state then startFly() else stopFly() end
     end
 })
 
-MainTab:AddButton({
-    Name = "Aktifkan Fly Sekali",
-    Callback = function()
-        local hrp = player.Character:FindFirstChild("HumanoidRootPart")
-        if hrp then
-            local tempFly = Instance.new("BodyVelocity")
-            tempFly.Velocity = Vector3.new(0,50,0)
-            tempFly.MaxForce = Vector3.new(1e5,1e5,1e5)
-            tempFly.Parent = hrp
-            task.delay(1, function()
-                tempFly:Destroy()
-            end)
+MainTab:AddSlider({
+    Name = "FlySpeed",
+    Min = 1,
+    Max = 100,
+    Default = flyspeed,
+    Callback = function(val)
+        flyspeed = val
+    end
+})
+
+RunService.RenderStepped:Connect(function()
+    if flying and LocalPlayer.Character and BV and BG then
+        local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        local camCF = Workspace.CurrentCamera.CFrame
+        local moveDir = Vector3.zero
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+            moveDir = moveDir + camCF.LookVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+            moveDir = moveDir - camCF.LookVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+            moveDir = moveDir - camCF.RightVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+            moveDir = moveDir + camCF.RightVector
+        end
+        BV.Velocity = moveDir * flyspeed
+        BG.CFrame = camCF
+    end
+end)
+
+-- SpeedHack
+local walkspeed = 16
+MainTab:AddToggle({
+    Name = "SpeedHack",
+    Default = false,
+    Callback = function(state)
+        if state then
+            LocalPlayer.Character.Humanoid.WalkSpeed = walkspeed
+        else
+            LocalPlayer.Character.Humanoid.WalkSpeed = 16
         end
     end
 })
 
 MainTab:AddSlider({
-    Name = "Fly Speed",
+    Name = "Speed",
     Min = 1,
     Max = 100,
-    Default = 5,
-    Increment = 1,
-    ValueName = "speed",
-    Callback = function(value)
-        flySpeed = value
+    Default = walkspeed,
+    Callback = function(val)
+        walkspeed = val
+        if LocalPlayer.Character then
+            LocalPlayer.Character.Humanoid.WalkSpeed = val
+        end
     end
 })
 
-RunService.RenderStepped:Connect(function()
-    if flyEnabled and flyVelocity and player.Character then
-        local moveDirection = Vector3.new()
-        if UIS:IsKeyDown(Enum.KeyCode.W) then
-            moveDirection = moveDirection + player.Character.HumanoidRootPart.CFrame.LookVector
-        end
-        if UIS:IsKeyDown(Enum.KeyCode.S) then
-            moveDirection = moveDirection - player.Character.HumanoidRootPart.CFrame.LookVector
-        end
-        if UIS:IsKeyDown(Enum.KeyCode.A) then
-            moveDirection = moveDirection - player.Character.HumanoidRootPart.CFrame.RightVector
-        end
-        if UIS:IsKeyDown(Enum.KeyCode.D) then
-            moveDirection = moveDirection + player.Character.HumanoidRootPart.CFrame.RightVector
-        end
-        if UIS:IsKeyDown(Enum.KeyCode.Space) then
-            moveDirection = moveDirection + Vector3.new(0,1,0)
-        end
-        if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then
-            moveDirection = moveDirection - Vector3.new(0,1,0)
-        end
-        flyVelocity.Velocity = moveDirection * flySpeed
-    end
-end)
-
-------------------------------------------------
 -- Auto Kill Aura Gun
-------------------------------------------------
+local autoGun = false
 MainTab:AddToggle({
     Name = "Auto Kill Aura Gun",
     Default = false,
     Callback = function(state)
-        autoGunEnabled = state
-    end
-})
-
-MainTab:AddButton({
-    Name = "Auto Kill Aura Gun Sekali",
-    Callback = function()
-        local gun = player.Character:FindFirstChildOfClass("Tool")
-        if gun and gun:FindFirstChild("Activate") then
-            gun:Activate()
-        end
+        autoGun = state
     end
 })
 
 RunService.RenderStepped:Connect(function()
-    if autoGunEnabled then
-        local gun = player.Character:FindFirstChildOfClass("Tool")
-        if gun and gun:FindFirstChild("Activate") then
-            gun:Activate()
-        end
-        if gun and gun:FindFirstChild("Reload") then
-            gun:Reload()
+    if autoGun then
+        local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+        if tool and tool:FindFirstChild("RemoteEvent") then
+            tool.RemoteEvent:FireServer()
         end
     end
 end)
 
-------------------------------------------------
--- Go to Player (Dropdown)
-------------------------------------------------
-local playerList = {}
-for _, plr in ipairs(Players:GetPlayers()) do
-    if plr ~= player then
-        table.insert(playerList, plr.Name)
+----------------------------------------------------------------------
+-- TAB: TELEPORT
+----------------------------------------------------------------------
+local TeleportTab = Window:MakeTab({
+    Name = "Teleport",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+-- Go to Player
+local playersList = {}
+for _, plr in pairs(Players:GetPlayers()) do
+    if plr ~= LocalPlayer then
+        table.insert(playersList, plr.Name)
     end
 end
 
+local selectedPlayer = nil
 TeleportTab:AddDropdown({
     Name = "Go to Player",
-    Default = "",
-    Options = playerList,
-    Callback = function(value)
-        local target = Players:FindFirstChild(value)
+    Default = playersList[1],
+    Options = playersList,
+    Callback = function(val)
+        selectedPlayer = val
+        local target = Players:FindFirstChild(val)
         if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-            player.Character:PivotTo(target.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0))
+            LocalPlayer.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
         end
     end
 })
 
-Players.PlayerAdded:Connect(function(plr)
-    table.insert(playerList, plr.Name)
-end)
-
-Players.PlayerRemoving:Connect(function(plr)
-    for i, name in ipairs(playerList) do
-        if name == plr.Name then
-            table.remove(playerList, i)
-            break
-        end
-    end
-end)
-
-------------------------------------------------
--- Teleport to Spawn (Api Unggun)
-------------------------------------------------
+-- Teleport to Spawn (Api Unggun Level >= 2)
 TeleportTab:AddButton({
-    Name = "Teleport to Spawn (Api Unggun)",
+    Name = "Teleport to Spawn",
     Callback = function()
-        local campfire = workspace:FindFirstChild("Campfire") or workspace:FindFirstChild("Fire") or workspace:FindFirstChild("SpawnCamp")
-        if campfire and campfire:IsA("BasePart") then
-            player.Character:PivotTo(campfire.CFrame + Vector3.new(0,3,0))
+        local campfire = Workspace:FindFirstChild("Campfire")
+        if campfire and campfire:FindFirstChild("Level") and campfire.Level.Value >= 2 then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = campfire.CFrame + Vector3.new(0, 5, 0)
         else
             OrionLib:MakeNotification({
-                Name = "Gagal",
-                Content = "Api unggun tidak ditemukan!",
+                Name = "Teleport Gagal",
+                Content = "Api unggun harus level 2 atau lebih!",
                 Time = 3
             })
         end
     end
 })
 
--- Selesai
-OrionLib:Init()
+----------------------------------------------------------------------
+-- TAB: MISC
+----------------------------------------------------------------------
+local MiscTab = Window:MakeTab({
+    Name = "Misc",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
 
+MiscTab:AddButton({
+    Name = "Rejoin Server",
+    Callback = function()
+        TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+    end
+})
+
+MiscTab:AddButton({
+    Name = "Server Hop",
+    Callback = function()
+        local servers = {}
+        local cursor
+        repeat
+            local url = "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"
+            if cursor then
+                url = url.."&cursor="..cursor
+            end
+            local data = HttpService:JSONDecode(game:HttpGet(url))
+            for _, server in pairs(data.data) do
+                if server.playing < server.maxPlayers and server.id ~= game.JobId then
+                    table.insert(servers, server.id)
+                end
+            end
+            cursor = data.nextPageCursor
+        until not cursor or #servers >= 1
+
+        if #servers > 0 then
+            TeleportService:TeleportToPlaceInstance(game.PlaceId, servers[math.random(#servers)], LocalPlayer)
+        else
+            OrionLib:MakeNotification({
+                Name = "Server Hop",
+                Content = "Tidak ada server lain yang ditemukan.",
+                Time = 3
+            })
+        end
+    end
+})
+
+MiscTab:AddButton({
+    Name = "Leave Game",
+    Callback = function()
+        game:Shutdown()
+    end
+})
+
+----------------------------------------------------------------------
+-- Start UI
+----------------------------------------------------------------------
+OrionLib:Init()
