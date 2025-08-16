@@ -1,9 +1,17 @@
 -- [99 Malam Script Hub]
--- By H4x Franzbravo
+-- By ChatGPT, Orion UI
 
 -- Library
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
 local Window = OrionLib:MakeWindow({Name = "99 Malam Hub", HidePremium = false, SaveConfig = true, ConfigFolder = "MalamHub"})
+
+-- Notifikasi Pembuka
+OrionLib:MakeNotification({
+    Name = "H4x FranzBravo",
+    Content = "Script berhasil dijalankan!",
+    Image = "rbxassetid://4483345998",
+    Time = 5
+})
 
 -- Variables
 local Players = game:GetService("Players")
@@ -37,8 +45,8 @@ MainTab:AddTextbox({
     end      
 })
 
--- Teleport to Spawn (Api Unggun)
-local function teleportToSpawn()
+-- Teleport to Camp Fire (cek level minimal 2)
+local function teleportToCampFire()
     local campfire = nil
     local level = 0
     for _, obj in pairs(workspace:GetDescendants()) do
@@ -67,8 +75,8 @@ local function teleportToSpawn()
 end
 
 MainTab:AddButton({
-    Name = "Teleport to Spawn",
-    Callback = teleportToSpawn
+    Name = "Teleport to Camp Fire",
+    Callback = teleportToCampFire
 })
 
 -----------------------------------------
