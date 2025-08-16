@@ -2,7 +2,7 @@
 -- By ChatGPT, Orion UI
 
 -- Library
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/GRPGaming/Key-System/refs/heads/Xycer-Hub-Script/ZusumeLib(Slider)')))()
 local Window = OrionLib:MakeWindow({Name = "99 Malam Hub", HidePremium = false, SaveConfig = true, ConfigFolder = "MalamHub"})
 
 -- Notifikasi Pembuka
@@ -187,3 +187,4 @@ MiscTab:AddButton({
 
 -----------------------------------------
 OrionLib:Init()
+
